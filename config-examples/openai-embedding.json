@@ -1,0 +1,12 @@
+{
+  "_comment": "OpenAI embedding via API",
+  "_docs": "Add this to your OpenClaw config.json under plugins.entries.memory",
+  "memory": {
+    "embedding": {
+      "provider": "openai",
+      "model": "text-embedding-3-small",
+      "apiKey": "YOUR_OPENAI_API_KEY",
+      "_note": "Uses ~$0.02 per 1M tokens"
+    }
+  }
+}

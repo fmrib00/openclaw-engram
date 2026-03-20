@@ -1,0 +1,12 @@
+{
+  "_comment": "Gemini embedding via Google AI API",
+  "_docs": "Add this to your OpenClaw config.json under plugins.entries.memory",
+  "memory": {
+    "embedding": {
+      "provider": "google",
+      "model": "text-embedding-004",
+      "apiKey": "YOUR_GOOGLE_AI_API_KEY",
+      "_note": "Get key at https://aistudio.google.com/apikey"
+    }
+  }
+}

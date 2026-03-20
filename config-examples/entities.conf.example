@@ -1,0 +1,25 @@
+# Entity Whitelist Configuration
+# ─────────────────────────────────────────────────────────
+# Format: entity_name = relative/path/to/file.md
+#
+# Only entities listed here will get their own memory files.
+# Everything else maps to the closest whitelist entity.
+#
+# Copy this to ~/.openclaw/workspace/memory/entities.conf
+# and customize for your team/project.
+
+# ── People (team members) ──
+alice = entities/people/alice.md
+bob = entities/people/bob.md
+
+# ── Systems (your core infrastructure) ──
+myapp = entities/systems/myapp.md
+server = entities/systems/server.md
+database = entities/systems/database.md
+
+# ── Vendors ──
+# aws = entities/vendors/aws.md
+
+# ── Customers (add as needed, use IDs) ──
+# C001 = entities/customers/c001.md
+# C002 = entities/customers/c002.md

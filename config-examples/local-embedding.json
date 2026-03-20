@@ -1,0 +1,11 @@
+{
+  "_comment": "Local embedding using node-llama-cpp (free, private, no API calls)",
+  "_docs": "Add this to your OpenClaw config.json under plugins.entries.memory",
+  "memory": {
+    "embedding": {
+      "provider": "node-llama-cpp",
+      "model": "embeddinggemma-300m",
+      "_note": "Download model first: openclaw memory model-download embeddinggemma-300m"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+# Runtime data (don't commit actual memories)
+memory/
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
