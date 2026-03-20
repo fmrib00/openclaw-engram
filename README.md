@@ -111,12 +111,30 @@ The installer checks dependencies, creates the directory structure, installs scr
 
 ### 2. Set up local embedding (recommended)
 
-```bash
-# Download embeddinggemma-300m (~600MB, one-time)
-openclaw memory model-download embeddinggemma-300m
+Add this to your OpenClaw config (`~/.openclaw/openclaw.json`):
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "memorySearch": {
+        "provider": "local",
+        "local": {
+          "modelPath": "hf:ggml-org/embeddinggemma-300m-qat-q8_0-GGUF/embeddinggemma-300m-qat-Q8_0.gguf"
+        }
+      }
+    }
+  }
+}
 ```
 
-That's it. OpenClaw's `memory_search` will automatically use this model to index and search your memory files. No API key needed, no billing, works offline.
+On first use, OpenClaw automatically downloads the embeddinggemma-300m model (~600MB) from HuggingFace. Then trigger indexing:
+
+```bash
+openclaw memory index --force
+```
+
+That's it. OpenClaw's `memory_search` will use this local model to index and search your memory files. No API key needed, no billing, works offline.
 
 > **Already using remote embedding?** That works too — see [Remote embedding](#remote-embedding-alternative) below.
 
@@ -291,7 +309,7 @@ sudo docker stop memu-postgres
 - bash 4+, curl, jq, python3
 - An OpenAI-compatible LLM API (for `memorize.sh` extraction)
 - OpenClaw with `memory_search` plugin (for semantic search — optional but recommended)
-- embeddinggemma-300m model (for local embedding — `openclaw memory model-download embeddinggemma-300m`)
+- embeddinggemma-300m model (for local embedding — auto-downloaded on first use, ~600MB)
 
 ## License
 
