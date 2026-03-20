@@ -49,15 +49,13 @@ else
     warn "OpenClaw not found — install it for semantic search (memory_search)"
 fi
 
-# Check for node-llama-cpp / local embedding capability
+# Check current memory search provider
 if [ -n "$OPENCLAW" ]; then
-    if "$OPENCLAW" memory model-list 2>/dev/null | grep -qi "gemma\|embedding" 2>/dev/null; then
-        ok "Local embedding model found"
+    CURRENT_PROVIDER=$("$OPENCLAW" memory status 2>/dev/null | grep "Provider:" | awk '{print $2}' || echo "unknown")
+    if [ "$CURRENT_PROVIDER" = "local" ]; then
+        ok "Local embedding already configured"
     else
-        warn "No local embedding model detected"
-        echo "    Download one (free, ~600MB, one-time):"
-        echo "    $OPENCLAW memory model-download embeddinggemma-300m"
-        echo ""
+        info "Current memory search provider: ${CURRENT_PROVIDER:-none}"
     fi
 fi
 
@@ -176,18 +174,71 @@ fi
 
 echo ""
 
-# ── Local Embedding ─────────────────────────────────────────────────────────
+# ── Local Embedding Configuration ───────────────────────────────────────────
 
-info "Local Embedding (for semantic search)"
+info "Local Embedding Setup (for semantic search)"
 echo ""
 echo "  openclaw-engram recommends local embedding for zero-cost, private,"
-echo "  offline-capable semantic search."
+echo "  offline-capable semantic search using embeddinggemma-300m (~600MB)."
 echo ""
-echo "  Download the model (~600MB, one-time):"
-echo "    openclaw memory model-download embeddinggemma-300m"
-echo ""
-echo "  Once downloaded, OpenClaw's memory_search automatically uses it."
-echo "  No API key, no billing, works offline."
+
+OPENCLAW_CONFIG="${OPENCLAW_CONFIG:-$HOME/.openclaw/openclaw.json}"
+NEED_RESTART=false
+
+if [ -f "$OPENCLAW_CONFIG" ]; then
+    # Check if memorySearch is already configured as local
+    CURRENT=$(python3 -c "
+import json
+with open('$OPENCLAW_CONFIG') as f:
+    c = json.load(f)
+p = c.get('agents',{}).get('defaults',{}).get('memorySearch',{}).get('provider','')
+print(p)
+" 2>/dev/null || echo "")
+
+    if [ "$CURRENT" = "local" ]; then
+        ok "Local embedding already configured in openclaw.json"
+    else
+        read -rp "  Configure local embedding now? (recommended) [Y/n] " SETUP_EMBED
+        if [[ ! "$SETUP_EMBED" =~ ^[Nn] ]]; then
+            python3 -c "
+import json
+with open('$OPENCLAW_CONFIG') as f:
+    config = json.load(f)
+
+# Ensure path exists
+config.setdefault('agents', {}).setdefault('defaults', {})
+
+# Set memorySearch to local
+config['agents']['defaults']['memorySearch'] = {
+    'provider': 'local',
+    'local': {
+        'modelPath': 'hf:ggml-org/embeddinggemma-300m-qat-q8_0-GGUF/embeddinggemma-300m-qat-Q8_0.gguf'
+    }
+}
+
+with open('$OPENCLAW_CONFIG', 'w') as f:
+    json.dump(config, f, indent=2)
+" 2>/dev/null
+
+            if [ $? -eq 0 ]; then
+                ok "Local embedding configured in openclaw.json"
+                echo "    Model: embeddinggemma-300m (~600MB, auto-downloaded on first use)"
+                echo "    No API key needed. Works offline."
+                NEED_RESTART=true
+            else
+                warn "Failed to update config. Add manually:"
+                echo '    "memorySearch": { "provider": "local", "local": { "modelPath": "hf:ggml-org/embeddinggemma-300m-qat-q8_0-GGUF/embeddinggemma-300m-qat-Q8_0.gguf" } }'
+            fi
+        else
+            info "Skipped local embedding setup"
+            echo "    You can configure it later — see config-examples/local-embedding.json"
+        fi
+    fi
+else
+    warn "OpenClaw config not found at $OPENCLAW_CONFIG"
+    echo "    Create it or set OPENCLAW_CONFIG to the correct path"
+fi
+
 echo ""
 
 # ── Cron setup ──────────────────────────────────────────────────────────────
@@ -254,11 +305,30 @@ echo -e "${GREEN}╔════════════════════
 echo -e "${GREEN}║     openclaw-engram installed! 🧠        ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════╝${NC}"
 echo ""
+
+# ── Restart Gateway ─────────────────────────────────────────────────────────
+
+if [ "$NEED_RESTART" = true ] && [ -n "$OPENCLAW" ]; then
+    echo ""
+    warn "Gateway restart required for embedding changes to take effect."
+    echo ""
+    read -rp "  Restart OpenClaw gateway now? [Y/n] " DO_RESTART
+    if [[ ! "$DO_RESTART" =~ ^[Nn] ]]; then
+        info "Restarting gateway..."
+        "$OPENCLAW" gateway restart 2>&1 | tail -3 || true
+        ok "Gateway restarted. The embedding model (~600MB) will download on first search."
+    else
+        echo ""
+        warn "Remember to restart the gateway manually:"
+        echo "    openclaw gateway restart"
+    fi
+    echo ""
+fi
+
 echo "  Next steps:"
 echo "    1. Edit $MEMORY_DIR/entities.conf to add your team/systems"
 echo "    2. Set LLM_API_KEY environment variable"
-echo "    3. Download local embedding: openclaw memory model-download embeddinggemma-300m"
-echo "    4. Test: echo 'Alice deployed the API' > /tmp/test.md"
+echo "    3. Test: echo 'Alice deployed the API' > /tmp/test.md"
 echo "            LLM_API_KEY=your-key bash $SCRIPTS_DIR/memorize.sh /tmp/test.md"
-echo "    5. Search: bash $SCRIPTS_DIR/recall.sh \"Alice\""
+echo "    4. Search: bash $SCRIPTS_DIR/recall.sh \"Alice\""
 echo ""

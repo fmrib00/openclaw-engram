@@ -111,30 +111,26 @@ The installer checks dependencies, creates the directory structure, installs scr
 
 ### 2. Set up local embedding (recommended)
 
-Add this to your OpenClaw config (`~/.openclaw/openclaw.json`):
+The installer automatically configures local embedding and prompts you to restart the gateway. If you skipped it, you can configure it manually:
 
 ```json
-{
-  "agents": {
-    "defaults": {
-      "memorySearch": {
-        "provider": "local",
-        "local": {
-          "modelPath": "hf:ggml-org/embeddinggemma-300m-qat-q8_0-GGUF/embeddinggemma-300m-qat-Q8_0.gguf"
-        }
-      }
-    }
+// Add to ~/.openclaw/openclaw.json under agents.defaults
+"memorySearch": {
+  "provider": "local",
+  "local": {
+    "modelPath": "hf:ggml-org/embeddinggemma-300m-qat-q8_0-GGUF/embeddinggemma-300m-qat-Q8_0.gguf"
   }
 }
 ```
 
-On first use, OpenClaw automatically downloads the embeddinggemma-300m model (~600MB) from HuggingFace. Then trigger indexing:
+Then restart the gateway and trigger indexing:
 
 ```bash
+openclaw gateway restart
 openclaw memory index --force
 ```
 
-That's it. OpenClaw's `memory_search` will use this local model to index and search your memory files. No API key needed, no billing, works offline.
+On first use, OpenClaw automatically downloads embeddinggemma-300m (~600MB) from HuggingFace. No API key needed, no billing, works offline.
 
 > **Already using remote embedding?** That works too — see [Remote embedding](#remote-embedding-alternative) below.
 
